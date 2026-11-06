@@ -15,8 +15,8 @@ class BilibiliSuspendResumeJob implements ShouldQueue
 {
     use Queueable;
 
-    public $queue = 'default';
-
+    // Local patch: $queue is already declared by the Queueable trait.
+    // Redeclaring it here is a property-composition fatal that kills the worker.
     public $tries = 3;
     public $backoff = [60, 120];
 
