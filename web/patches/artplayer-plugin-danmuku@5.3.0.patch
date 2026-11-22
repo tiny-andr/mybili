@@ -1,0 +1,47 @@
+diff --git a/dist/artplayer-plugin-danmuku.mjs b/dist/artplayer-plugin-danmuku.mjs
+index fac426cd821bbde03114f0bbc509d68ea403d7a4..35f64b45aa77e6b72572f38fa971f1823408c900 100644
+--- a/dist/artplayer-plugin-danmuku.mjs
++++ b/dist/artplayer-plugin-danmuku.mjs
+@@ -481,15 +481,39 @@ class Danmuku {
+   // 根据状态获取弹幕
+   filter(state, callback) {
+     const danmus = this.states[state] || [];
+-    for (let index = 0; index < danmus.length; index++) {
+-      callback(danmus[index]);
++    // Snapshot: callback may call setState, which mutates this pool in place.
++    const snapshot = danmus.slice();
++    for (let index = 0; index < snapshot.length; index++) {
++      callback(snapshot[index]);
+     }
+     return danmus;
+   }
+   // 设置弹幕状态
+   setState(danmu, state) {
+-    this.states[danmu.$state] = this.states[danmu.$state].filter((item) => item !== danmu);
++    // O(1) swap-remove instead of filter() over the whole pool: with 200k+ danmaku
++    // every state change used to walk the array, making load and playback O(n^2).
++    const src = this.states[danmu.$state];
++    if (src !== undefined) {
++      const idx = danmu.$poolIndex;
++      if (idx !== undefined && src[idx] === danmu) {
++        const last = src.pop();
++        if (last !== danmu) {
++          src[idx] = last;
++          last.$poolIndex = idx;
++        }
++      } else {
++        const found = src.indexOf(danmu);
++        if (found >= 0) {
++          const last = src.pop();
++          if (last !== danmu) {
++            src[found] = last;
++            last.$poolIndex = found;
++          }
++        }
++      }
++    }
+     danmu.$state = state;
++    danmu.$poolIndex = this.states[state].length;
+     if (danmu.$ref) {
+       danmu.$ref.dataset.state = state;
+     }
