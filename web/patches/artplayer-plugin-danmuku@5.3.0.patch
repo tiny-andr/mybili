@@ -1,7 +1,16 @@
 diff --git a/dist/artplayer-plugin-danmuku.mjs b/dist/artplayer-plugin-danmuku.mjs
-index fac426cd821bbde03114f0bbc509d68ea403d7a4..35f64b45aa77e6b72572f38fa971f1823408c900 100644
+index fac426cd821bbde03114f0bbc509d68ea403d7a4..48f42430c7ea3b69ed170b28eccb956f3f7fcd4f 100644
 --- a/dist/artplayer-plugin-danmuku.mjs
 +++ b/dist/artplayer-plugin-danmuku.mjs
+@@ -444,7 +444,7 @@ class Danmuku {
+     this.option = Object.assign({}, Danmuku.option, this.option, option);
+     this.validator(this.option, Danmuku.scheme);
+     this.option.mode = clamp(this.option.mode, 0, 2);
+-    this.option.speed = clamp(this.option.speed, 1, 10);
++    this.option.speed = clamp(this.option.speed, 1, 60); // was [1,10]: 10 caps the slowest preset
+     this.option.opacity = clamp(this.option.opacity, 0, 1);
+     this.option.lockTime = clamp(this.option.lockTime, 1, 60);
+     this.option.maxLength = clamp(this.option.maxLength, 1, 1e3);
 @@ -481,15 +481,39 @@ class Danmuku {
    // 根据状态获取弹幕
    filter(state, callback) {
@@ -45,3 +54,39 @@ index fac426cd821bbde03114f0bbc509d68ea403d7a4..35f64b45aa77e6b72572f38fa971f182
      if (danmu.$ref) {
        danmu.$ref.dataset.state = state;
      }
+@@ -1094,28 +1118,30 @@ class Setting {
+     return {
+       min: 0,
+       max: 4,
++      // Slower ladder (value = seconds for one danmaku to cross the screen, larger = slower).
++      // Original 10/7.5/5/2.5/1 was still too fast in practice; every step is doubled.
+       steps: [
+         {
+           name: "极慢",
+-          value: 10
++          value: 20
+         },
+         {
+           name: "较慢",
+-          value: 7.5,
++          value: 15,
+           hide: true
+         },
+         {
+           name: "适中",
+-          value: 5
++          value: 10
+         },
+         {
+           name: "较快",
+-          value: 2.5,
++          value: 5,
+           hide: true
+         },
+         {
+           name: "极快",
+-          value: 1
++          value: 2
+         }
+       ],
+       ...this.option.SPEED
